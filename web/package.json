@@ -11,11 +11,16 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "nuxt": "^2.0.0",
     "@nuxtjs/axios": "^5.3.6",
-    "@nuxtjs/dotenv": "^1.4.0"
+    "@nuxtjs/dotenv": "^1.4.0",
+    "@uppy/core": "^1.9.0",
+    "@uppy/dashboard": "^1.7.0",
+    "@uppy/webcam": "^1.6.0",
+    "@uppy/xhr-upload": "^1.5.3",
+    "nuxt": "^2.0.0"
   },
   "devDependencies": {
+    "@mdi/js": "^5.0.45",
     "@nuxtjs/vuetify": "^1.0.0"
   }
 }
