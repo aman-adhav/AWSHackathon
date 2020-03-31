@@ -1,0 +1,10 @@
+@import "./variables.scss";
+
+.page-enter-active,
+.page-leave-active {
+  transition: opacity $primary-transition;
+}
+.page-enter,
+.page-leave-active {
+  opacity: 0;
+}
