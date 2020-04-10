@@ -108,6 +108,7 @@ import AppUppy from "~/components/uppy";
 import { saveProduct, saveMedia } from "~/assets/js/register";
 
 export default {
+  middleware: "auth",
   data() {
     return {
       uploading: false,
