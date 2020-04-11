@@ -1,5 +1,5 @@
 <template>
-  <div id="Uppy-container" ref="uppyContainer"></div>
+  <div class="Uppy-container" ref="uppyContainer"></div>
 </template>
 
 <style lang="scss">
@@ -7,7 +7,7 @@
 @import "@uppy/dashboard/dist/style.min.css";
 @import "@uppy/webcam/dist/style.min.css";
 
-#Uppy-container {
+.Uppy-container {
   .uppy-Dashboard-inner {
     border-radius: 0;
   }
@@ -21,14 +21,22 @@ import Webcam from "@uppy/webcam";
 import XHRUpload from "@uppy/xhr-upload";
 
 export default {
+  props: {
+    config: Object
+  },
   mounted() {
-    this.uppy = Uppy({
-      restrictions: { allowedFileTypes: ["image/jpeg", "image/png"] }
-    })
+    this.uppy = Uppy(
+      this.config || {
+        restrictions: {
+          allowedFileTypes: ["image/jpeg", "image/png"]
+        }
+      }
+    )
       .use(Webcam, {
         modes: ["picture"],
         preferredImageMimeType: "image/jpeg",
-        facingMode: "environment"
+        facingMode: "environment",
+        mirror: false
       })
       .use(Dashboard, {
         target: this.$refs.uppyContainer,
@@ -38,7 +46,9 @@ export default {
         width: "100%",
         plugins: ["Webcam"]
       })
-      .use(XHRUpload, { endpoint: "https://api2.transloadit.com" });
+      .use(XHRUpload, {
+        endpoint: "https://dummy.restapiexample.com/api/v1/create"
+      });
 
     this.uppy.on("file-added", file => this.$emit("file-added", file));
     this.uppy.on("file-removed", file => this.$emit("file-removed", file));
