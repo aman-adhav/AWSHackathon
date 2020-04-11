@@ -6,7 +6,7 @@
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
-      <v-toolbar-items v-if="$store.state.loggedIn">
+      <v-toolbar-items v-if="$store.state.authenticated">
         <v-btn to="/products" exact text>
           <v-icon v-text="mdiApps"></v-icon>
         </v-btn>
@@ -20,7 +20,7 @@
             </v-btn>
           </template>
           <v-list>
-            <v-list-item @click="$store.commit('logout')">
+            <v-list-item @click="logout">
               <v-list-item-title>Log Out</v-list-item-title>
             </v-list-item>
           </v-list>
@@ -39,6 +39,12 @@ import { mdiAccount, mdiApps, mdiDropbox } from "@mdi/js";
 export default {
   data() {
     return { mdiAccount, mdiApps, mdiDropbox };
+  },
+  methods: {
+    logout() {
+      this.$auth.logout();
+      this.$router.push("/");
+    }
   }
 };
 </script>
