@@ -6,7 +6,6 @@ export function state() {
 
 export const mutations = {
   login(state) {
-    this.$router.replace("/products");
     state.loggedIn = true;
   },
   logout(state) {

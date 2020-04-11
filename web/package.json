@@ -21,6 +21,6 @@
   },
   "devDependencies": {
     "@mdi/js": "^5.0.45",
-    "@nuxtjs/vuetify": "^1.0.0"
+    "@nuxtjs/vuetify": "^1.11.0"
   }
 }

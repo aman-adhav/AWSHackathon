@@ -26,7 +26,7 @@
           </v-form>
           <v-card-actions right>
             <v-spacer></v-spacer>
-            <v-btn @click="$store.commit('login')" color="primary">Login</v-btn>
+            <v-btn @click="login" color="primary">Login</v-btn>
           </v-card-actions>
         </v-card>
       </v-flex>
@@ -38,8 +38,22 @@
 import { mdiAccount, mdiLock } from "@mdi/js";
 
 export default {
+  middleware({ store, redirect, query }) {
+    const { from } = query;
+
+    if (store.state.loggedIn) return redirect(from || "/products");
+  },
   data() {
     return { mdiAccount, mdiLock };
+  },
+  methods: {
+    login() {
+      this.$store.commit("login");
+
+      const { from } = this.$route.query;
+
+      this.$router.push(from || "/products");
+    }
   }
 };
 </script>
