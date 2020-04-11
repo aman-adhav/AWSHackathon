@@ -1,9 +1,5 @@
-export default function({ store, redirect, route }) {
-  if (!store.state.loggedIn) {
+export default function({ app, store, redirect, route }) {
+  if (!app.$auth.isAuthenticated()) {
     return redirect(302, "/", { from: route.fullPath });
-    // error({
-    //   message: "You are not logged in",
-    //   statusCode: 403
-    // });
   }
 }

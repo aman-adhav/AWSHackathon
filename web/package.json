@@ -17,6 +17,7 @@
     "@uppy/dashboard": "^1.7.0",
     "@uppy/webcam": "^1.6.0",
     "@uppy/xhr-upload": "^1.5.3",
+    "amazon-cognito-identity-js": "^4.2.1",
     "nuxt": "^2.0.0"
   },
   "devDependencies": {
