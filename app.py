@@ -9,6 +9,7 @@ from flask import Flask, jsonify, request
 import boto3
 import ast
 import decimal
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 app = Flask(__name__)
@@ -41,7 +42,7 @@ def create_new_product():
         'stat': "In progress"
     })
 
-    return jsonify({"product_id": new_uuid}), 200
+    return jsonify({"product_id": new_uuid}), new_uuid
 
 @app.route('/update/<id_>', methods=['POST'])
 def update_product(id_):
@@ -123,9 +124,10 @@ def delete_item(id_):
     return "Done", 200
 
 
-@app.route("/scan_barcode/<id_>", methods=["POST"])
-def scan_barcode(id_):
+@app.route("/scan_barcode/", methods=["POST"])
+def scan_barcode():
     val = []
+    send_, id_ = create_new_product()
     for filename, file in request.files.items():
         #print(file.filename)
         response = sage_client.invoke_endpoint(
@@ -172,25 +174,36 @@ def scan_barcode(id_):
 
             #print(value)
             update_from_barcode(value, id_)
-            return "Update Successful", 200
+            return send_, 200
 
         else:
-            return "Error Reading Barcode Please try again at another time", 200
+            return "Error Reading Barcode Please try again at another time", 400
 
     else:
         return "Unacceptable Input", 400
 
 
 @app.route('/retrieve/<id_>', methods=["POST"])
-def retrieve_images(id_):
+def retrieve(id_):
     folder_id = id_
     my_bucket = s3.Bucket('thirdparty-image-bucket')
     image_list = []
+    dynamodb_items = []
     for object_summary in my_bucket.objects.filter(
             Prefix="52ce57a6-6272-4e4e-91e5-d4bc0640a8bd/"):
         val = "https://thirdparty-image-bucket.s3.amazonaws.com/"+ object_summary.key
         image_list.append(val)
-    return jsonify({'image_list': image_list}), 200
+
+    try:
+        response = table.get_item(
+            Key={'username': 'admin', 'product_id': folder_id},
+        )
+        dynamodb_items = response
+        #print(dynamodb_items)
+    except ClientError as e:
+        print(e.response['Error']['Message'])
+        return "Error Occured", 400
+    return jsonify({'image_list': image_list, "item_info": dynamodb_items}), 200
 
 @app.route('/upload/<id_>', methods=['POST'])
 def upload(id_):
@@ -199,7 +212,30 @@ def upload(id_):
         s3.Bucket('thirdparty-image-bucket').put_object(Key=id_+"/"+file.filename, Body=file)
     return '<h1>File saved to S3 </h1>'
 
-
+@app.route('/get_item_list', methods=['POST'])
+def return_index():
+    try:
+        response = table.query(
+            KeyConditionExpression=Key('username').eq('admin')
+        )
+        #print(response)
+        response = response["Items"]
+        array = []
+        for i in response:
+            print(i)
+            #print(response)
+            val = {}
+            val["product_id"] = i["product_id"]
+            val["status"] = i["stat"]
+            val["product_name"] = i['product_name']
+            array.append(val)
+        #print(array)
+        print(response)
+        return jsonify({"list_items": array}), 200
+    except ClientError as e:
+        print(e.response['Error']['Message'])
+        return "Error Occured", 400
+    return "cool", 200
 
 if __name__ == '__main__':
 
