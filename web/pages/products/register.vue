@@ -7,6 +7,7 @@
             <v-card-title>Upload barcode</v-card-title>
             <v-card-text>
               <app-uppy
+                ref="barcodeUppy"
                 @complete="barcodeUploaded"
                 :config="{
                   restrictions: {
@@ -138,8 +139,15 @@ export default {
       window: 1
     };
   },
+  mounted() {
+    this.$refs.barcodeUppy.uppy.getPlugin("XHRUpload").opts.endpoint =
+      "http://localhost:5000/scan_barcode";
+  },
   methods: {
     barcodeUploaded({ successful }) {
+      console.log(successful);
+      return;
+
       if (!successful.length) return;
 
       this.window = 2;
