@@ -46,9 +46,7 @@ export default {
         width: "100%",
         plugins: ["Webcam"]
       })
-      .use(XHRUpload, {
-        endpoint: "https://dummy.restapiexample.com/api/v1/create"
-      });
+      .use(XHRUpload, { formData: true, fieldName: "file" });
 
     this.uppy.on("file-added", file => this.$emit("file-added", file));
     this.uppy.on("file-removed", file => this.$emit("file-removed", file));
