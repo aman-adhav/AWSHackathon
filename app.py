@@ -124,6 +124,7 @@ def delete_item(id_):
     return "Done", 200
 
 
+
 @app.route("/scan_barcode/", methods=["POST"])
 def scan_barcode():
     val = []
@@ -235,7 +236,6 @@ def return_index():
     except ClientError as e:
         print(e.response['Error']['Message'])
         return "Error Occured", 400
-    return "cool", 200
 
 if __name__ == '__main__':
 
