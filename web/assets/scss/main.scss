@@ -6,11 +6,11 @@ html {
 
 .page-enter-active,
 .page-leave-active {
-  transition: opacity $primary-transition;
+  transition: opacity $primary-transition !important;
 }
 .page-enter,
 .page-leave-active {
-  opacity: 0;
+  opacity: 0 !important;
 }
 
 .w-100 {

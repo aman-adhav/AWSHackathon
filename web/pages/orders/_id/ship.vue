@@ -1,8 +1,8 @@
 <template>
-  <app-layout title="Ship product">
+  <app-layout title="Ship order">
     <v-container class="pa-4">
       <v-card>
-        <v-window v-model="window">
+        <v-window touchless v-model="window">
           <v-window-item :value="1">
             <v-card-title>Review information</v-card-title>
             <v-card-subtitle class="px-4 pt-4 pb-0">Personal:</v-card-subtitle>
@@ -162,7 +162,14 @@ import AppUppy from "~/components/uppy";
 import { shipProduct } from "~/assets/js/ship";
 
 export default {
-  middleware: "auth",
+  middleware: "auth/vendor",
+  head() {
+    this.$store.commit("setPageTitle", "Ship product");
+
+    return {
+      title: this.$store.state.pageTitle
+    };
+  },
   data() {
     return {
       name: "Nancy D. Williams",

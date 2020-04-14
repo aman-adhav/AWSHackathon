@@ -1,5 +1,5 @@
 <template>
-  <app-layout title="Products">
+  <app-layout title="Orders">
     <!-- <v-btn @click="test">test</v-btn> -->
     <v-container grid-list-md>
       <v-layout wrap>
@@ -69,7 +69,7 @@
                   <v-list>
                     <v-list-item
                       :disabled="item.payment !== 'paid'"
-                      :to="`/products/${item.id}/ship`"
+                      :to="`/orders/${item.id}/ship`"
                     >
                       <v-list-item-title>Ship</v-list-item-title>
                     </v-list-item>
@@ -117,7 +117,14 @@ import {
 } from "@mdi/js";
 
 export default {
-  middleware: "auth",
+  middleware: "auth/vendor",
+  head() {
+    this.$store.commit("setPageTitle", "Orders");
+
+    return {
+      title: this.$store.state.pageTitle
+    };
+  },
   data() {
     this.formatter = new Intl.NumberFormat(undefined, {
       style: "currency",
