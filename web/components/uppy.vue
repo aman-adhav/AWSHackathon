@@ -8,8 +8,11 @@
 @import "@uppy/webcam/dist/style.min.css";
 
 .Uppy-container {
+  z-index: 1;
+  position: relative;
+
   .uppy-Dashboard-inner {
-    border-radius: 0;
+    border-radius: $border-radius-root;
   }
 }
 </style>
@@ -46,7 +49,11 @@ export default {
         width: "100%",
         plugins: ["Webcam"]
       })
-      .use(XHRUpload, { formData: true, fieldName: "file" });
+      .use(XHRUpload, {
+        formData: true,
+        fieldName: "file",
+        endpoint: "http://dummy.restapiexample.com/api/v1/create"
+      });
 
     this.uppy.on("file-added", file => this.$emit("file-added", file));
     this.uppy.on("file-removed", file => this.$emit("file-removed", file));

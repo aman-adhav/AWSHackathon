@@ -2,7 +2,7 @@
   <app-layout title="Register product">
     <v-container class="pa-4">
       <v-card :disabled="uploading">
-        <v-window v-model="window">
+        <v-window touchless v-model="window">
           <v-window-item :value="1">
             <v-card-title>Upload barcode</v-card-title>
             <v-card-text>
@@ -130,7 +130,14 @@ import AppUppy from "~/components/uppy";
 import { saveProduct, saveMedia } from "~/assets/js/register";
 
 export default {
-  middleware: "auth",
+  middleware: "auth/vendor",
+  head() {
+    this.$store.commit("setPageTitle", "Register product");
+
+    return {
+      title: this.$store.state.pageTitle
+    };
+  },
   data() {
     return {
       uploading: false,
@@ -141,12 +148,13 @@ export default {
   },
   mounted() {
     this.$refs.barcodeUppy.uppy.getPlugin("XHRUpload").opts.endpoint =
-      "http://localhost:5000/scan_barcode";
+      "http://dummy.restapiexample.com/api/v1/create";
+    // "http://localhost:5000/scan_barcode";
   },
   methods: {
     barcodeUploaded({ successful }) {
       console.log(successful);
-      return;
+      // return;
 
       if (!successful.length) return;
 

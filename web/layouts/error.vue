@@ -1,10 +1,10 @@
 <template>
-  <v-container style="max-width: 1185px !important" fill-height>
+  <v-container class="pa-4" style="max-width: 1185px !important" fill-height>
     <v-layout class="error-container" fill-height align-center>
       <v-flex>
         <p class="display-4" v-text="error.statusCode"></p>
         <p class="display-1 font-weight-light" v-text="message"></p>
-        <v-btn depressed color="primary" to="/">Home page</v-btn>
+        <v-btn depressed color="primary" href="/">Home page</v-btn>
       </v-flex>
       <v-icon
         class="hidden-sm-and-down"
@@ -45,12 +45,10 @@ export default {
       default: null
     }
   },
-  computed: {
-    message() {
-      if (process.env.NODE_ENV === "production") return "An error occurred";
-
-      return this.error.message || "An error occurred";
-    }
+  head() {
+    return {
+      title: this.error.statusCode
+    };
   },
   data() {
     return {
@@ -59,13 +57,12 @@ export default {
       mdiAlertCircleOutline
     };
   },
-  head() {
-    const title =
-      this.error.statusCode === 404 ? this.pageNotFound : this.otherError;
+  computed: {
+    message() {
+      if (process.env.NODE_ENV === "production") return "An error occurred";
 
-    return {
-      title
-    };
+      return this.error.message || "An error occurred";
+    }
   }
 };
 </script>

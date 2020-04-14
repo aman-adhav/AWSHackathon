@@ -4,9 +4,14 @@ import {
   AuthenticationDetails
 } from "amazon-cognito-identity-js";
 
-const userPool = new CognitoUserPool({
-  UserPoolId: process.env.COGNITO_POOL_ID, // Your user pool id here
-  ClientId: process.env.COGNITO_CLIENT_ID // Your client id here
+const vendorPool = new CognitoUserPool({
+  UserPoolId: process.env.VENDOR_COGNITO_POOL_ID, // Your user pool id here
+  ClientId: process.env.VENDOR_COGNITO_CLIENT_ID // Your client id here
+});
+
+const deliveryPool = new CognitoUserPool({
+  UserPoolId: process.env.DELIVERY_COGNITO_POOL_ID, // Your user pool id here
+  ClientId: process.env.DELIVERY_COGNITO_CLIENT_ID // Your client id here
 });
 
 class AuthService {
@@ -42,11 +47,13 @@ class AuthService {
     this.store.commit("setUser", null);
   }
 
-  login(username, password) {
+  login(username, password, userType) {
     const authenticationData = {
       Username: username,
       Password: password
     };
+
+    const userPool = userType === "vendor" ? vendorPool : deliveryPool;
 
     const userData = {
       Username: username,
@@ -69,7 +76,38 @@ class AuthService {
           this.store.commit("setAuthenticated", true);
           this.store.commit("setUser", cognitoUser.getUsername());
 
-          resolve(this.accessToken);
+          resolve(true);
+        },
+
+        onFailure: error => {
+          this.logout();
+          reject(error);
+        },
+
+        newPasswordRequired: (userAttributes, requiredAttributes) => {
+          this.user = cognitoUser;
+
+          delete userAttributes.email_verified;
+
+          resolve(userAttributes);
+        }
+      });
+    });
+  }
+
+  handleNewPassword(newPassword, userAttributes) {
+    return new Promise((resolve, reject) => {
+      this.user.completeNewPasswordChallenge(newPassword, userAttributes, {
+        onSuccess: result => {
+          this.session = result;
+          this.accessToken = result.getAccessToken().getJwtToken();
+          this.idToken = result.getIdToken().getJwtToken();
+          this.refreshToken = result.getRefreshToken().getToken();
+
+          this.store.commit("setAuthenticated", true);
+          this.store.commit("setUser", this.user.getUsername());
+
+          resolve(true);
         },
 
         onFailure: error => {
