@@ -1,5 +1,9 @@
 @import "./variables.scss";
 
+html {
+  overflow-y: auto !important;
+}
+
 .page-enter-active,
 .page-leave-active {
   transition: opacity $primary-transition;

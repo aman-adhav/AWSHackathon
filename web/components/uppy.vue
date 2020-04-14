@@ -54,6 +54,11 @@ export default {
     this.uppy.on("file-removed", file => this.$emit("file-removed", file));
     this.uppy.on("complete", result => this.$emit("complete", result));
   },
+  methods: {
+    upload() {
+      return this.uppy.upload();
+    }
+  },
   beforeDestroy() {
     this.uppy.close();
   }

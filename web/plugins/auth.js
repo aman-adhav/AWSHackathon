@@ -25,7 +25,9 @@ class AuthService {
 
     if (this.session) authenticated = this.session.isValid();
 
-    this.store.commit("setAuthenticated", authenticated);
+    if (!authenticated) this.logout();
+    else this.store.commit("setAuthenticated", true);
+
     return authenticated;
   }
 
@@ -37,6 +39,7 @@ class AuthService {
     this.refreshToken = null;
 
     this.store.commit("setAuthenticated", false);
+    this.store.commit("setUser", null);
   }
 
   login(username, password) {
@@ -64,19 +67,13 @@ class AuthService {
           this.refreshToken = result.getRefreshToken().getToken();
 
           this.store.commit("setAuthenticated", true);
+          this.store.commit("setUser", cognitoUser.getUsername());
 
           resolve(this.accessToken);
         },
 
         onFailure: error => {
-          this.user = null;
-          this.session = null;
-          this.accessToken = null;
-          this.idToken = null;
-          this.refreshToken = null;
-
-          this.store.commit("setAuthenticated", false);
-
+          this.logout();
           reject(error);
         }
       });

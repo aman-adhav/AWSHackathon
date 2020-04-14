@@ -1,5 +1,6 @@
 <template>
-  <app-layout title="Dashboard">
+  <app-layout title="Products">
+    <!-- <v-btn @click="test">test</v-btn> -->
     <v-container grid-list-md>
       <v-layout wrap>
         <template v-for="(stat, i) in stats">
@@ -48,9 +49,10 @@
               </template>
               <template v-slot:item.status="{ item }">
                 <v-chip
-                  :class="
-                    item.status === 'fulfilled' ? 'chip-green' : 'chip-orange'
-                  "
+                  :class="{
+                    'chip-green': item.status === 'completed',
+                    'chip-orange': item.status === 'shipped'
+                  }"
                   >{{ item.status }}</v-chip
                 >
               </template>
@@ -67,7 +69,7 @@
                   <v-list>
                     <v-list-item
                       :disabled="item.payment !== 'paid'"
-                      @click="() => true"
+                      :to="`/products/${item.id}/ship`"
                     >
                       <v-list-item-title>Ship</v-list-item-title>
                     </v-list-item>
@@ -153,7 +155,8 @@ export default {
         },
         { text: "Date", value: "date" },
         { text: "Quantity", value: "quantity", align: "center" },
-        { text: "Payment", value: "payment", align: "center", sortable: false },
+        { text: "Payment", value: "payment", align: "center" },
+        { text: "Status", value: "status", align: "center" },
         { text: "Total", value: "total" },
         { text: "Actions", value: "actions", align: "center", sortable: false }
       ],
@@ -164,6 +167,7 @@ export default {
           date: new Date("Tue Mar 10 2020 06:29:13 GMT+0000 (UTC)"),
           payment: "pending",
           total: 94.21,
+          status: "unfulfilled",
           product: {
             id: "5e87975078b04f2289ba25f7",
             name: "Leggings",
@@ -176,6 +180,7 @@ export default {
           date: new Date("Fri Feb 14 2020 16:53:00 GMT+0000 (UTC)"),
           payment: "paid",
           total: 196.48,
+          status: "unfulfilled",
           product: {
             id: "5e879750f345db849675ece6",
             name: "Leggings",
@@ -188,6 +193,7 @@ export default {
           date: new Date("Fri Feb 14 2020 06:20:13 GMT+0000 (UTC)"),
           payment: "pending",
           total: 67.15,
+          status: "unfulfilled",
           product: {
             id: "5e879750a60436750b87c50a",
             name: "Leggings",
@@ -200,6 +206,7 @@ export default {
           date: new Date("Mon Feb 03 2020 07:25:53 GMT+0000 (UTC)"),
           payment: "paid",
           total: 26.4,
+          status: "unfulfilled",
           product: {
             id: "5e879750d6c3655037256d73",
             name: "Leggings",
@@ -212,6 +219,7 @@ export default {
           date: new Date("Fri Feb 28 2020 10:09:38 GMT+0000 (UTC)"),
           payment: "paid",
           total: 155.47,
+          status: "unfulfilled",
           product: {
             id: "5e8797503bedf858a90bb018",
             name: "Leggings",
@@ -224,6 +232,7 @@ export default {
           date: new Date("Sun Jan 26 2020 11:09:55 GMT+0000 (UTC)"),
           payment: "paid",
           total: 99.53,
+          status: "unfulfilled",
           product: {
             id: "5e8797501e9f15d7dc7a8e74",
             name: "Leggings",
@@ -236,6 +245,17 @@ export default {
   methods: {
     formatCurrency(number) {
       return this.formatter.format(number);
+    },
+    test() {
+      this.$axios({
+        method: "GET",
+        url: "http://localhost:5000/api/private",
+        headers: { Authorization: `Bearer ${this.$auth.accessToken}` }
+      })
+        .then(({ data }) => {
+          console.log(data);
+        })
+        .catch(error => console.error(error));
     }
   },
   components: { AppLayout }
