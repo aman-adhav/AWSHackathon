@@ -4,7 +4,7 @@
       <v-card :disabled="uploading">
         <v-window v-model="window">
           <v-window-item :value="1">
-            <v-card-title class="headline">Upload barcode:</v-card-title>
+            <v-card-title>Upload barcode</v-card-title>
             <v-card-text>
               <app-uppy
                 @complete="barcodeUploaded"
@@ -19,7 +19,10 @@
             </v-card-text>
           </v-window-item>
           <v-window-item :value="2">
-            <v-card-title class="headline pb-0">Info:</v-card-title>
+            <v-card-title>Enter product</v-card-title>
+            <v-card-subtitle class="px-4 pt-4 pb-0">
+              General information:
+            </v-card-subtitle>
             <v-container class="pa-4" fluid grid-list-md>
               <v-form>
                 <v-layout>
@@ -93,12 +96,13 @@
                 </v-layout>
               </v-form>
             </v-container>
-            <v-card-title class="headline pb-0">Media:</v-card-title>
+            <v-card-subtitle class="pb-0">Media:</v-card-subtitle>
             <v-container class="pa-4" fluid>
               <app-uppy></app-uppy>
             </v-container>
             <v-divider></v-divider>
             <v-card-actions>
+              <v-spacer></v-spacer>
               <v-btn
                 :loading="uploading"
                 :success="done"
@@ -108,7 +112,6 @@
               >
                 Upload
               </v-btn>
-              <v-btn color="primary" text>Cancel</v-btn>
             </v-card-actions>
           </v-window-item>
         </v-window>

@@ -2,7 +2,9 @@
   <v-app>
     <v-app-bar clipped-left dark color="primary" app>
       <v-toolbar-title>
-        <span class="font-weight-bold">amazon</span>&nbsp;Vendors
+        <nuxt-link to="/" class="app-bar-title">
+          <span class="font-weight-bold">amazon</span>&nbsp;Vendors
+        </nuxt-link>
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -32,6 +34,14 @@
     </v-content>
   </v-app>
 </template>
+
+<style lang="scss" scoped>
+.app-bar-title {
+  color: inherit !important;
+  text-transform: none;
+  text-decoration: none;
+}
+</style>
 
 <script>
 import { mdiAccount, mdiApps, mdiDropbox } from "@mdi/js";

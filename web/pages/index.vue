@@ -1,12 +1,13 @@
 <template>
   <v-container fluid fill-height>
+    <v-flex></v-flex>
     <v-layout fill-height align-center justify-center>
       <v-flex shrink>
         <v-card max-width="500">
-          <v-card-title class="headline primary white--text"
-            >Login</v-card-title
-          >
-          <v-form ref="form" lazy-validation>
+          <v-form @submit="login" ref="form" lazy-validation>
+            <v-card-title class="headline primary white--text">
+              Login
+            </v-card-title>
             <v-container fluid grid-list-md>
               <v-layout wrap>
                 <v-flex xs12>
@@ -31,18 +32,18 @@
                 </v-flex>
               </v-layout>
             </v-container>
+            <v-card-actions right>
+              <v-spacer></v-spacer>
+              <v-btn
+                type="submit"
+                :disabled="loading"
+                :loading="loading"
+                color="primary"
+                :state="'error'"
+                >Login</v-btn
+              >
+            </v-card-actions>
           </v-form>
-          <v-card-actions right>
-            <v-spacer></v-spacer>
-            <v-btn
-              @click="login"
-              :disabled="loading"
-              :loading="loading"
-              color="primary"
-              :state="'error'"
-              >Login</v-btn
-            >
-          </v-card-actions>
         </v-card>
       </v-flex>
     </v-layout>
@@ -60,7 +61,7 @@ export default {
   middleware({ store, redirect, query }) {
     const { from } = query;
 
-    if (store.state.loggedIn) return redirect(from || "/products");
+    if (store.state.authenticated) redirect(from || "/products");
   },
   data() {
     return {
@@ -71,7 +72,7 @@ export default {
       },
       rules: {
         required: value => !!value || "Required.",
-        min: v => v.length >= 8 || "Min 6 characters."
+        min: v => v.length >= 6 || "Min 6 characters."
       },
       username: "",
       password: "",
@@ -82,7 +83,9 @@ export default {
     };
   },
   methods: {
-    login() {
+    login(event) {
+      event.preventDefault();
+
       if (!this.$refs.form.validate()) return;
 
       this.loading = true;
