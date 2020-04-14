@@ -191,7 +191,7 @@ def retrieve(id_):
     image_list = []
     dynamodb_items = []
     for object_summary in my_bucket.objects.filter(
-            Prefix="52ce57a6-6272-4e4e-91e5-d4bc0640a8bd/"):
+            Prefix= folder_id + "/"):
         val = "https://thirdparty-image-bucket.s3.amazonaws.com/"+ object_summary.key
         image_list.append(val)
 
