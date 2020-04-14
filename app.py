@@ -15,23 +15,25 @@ from botocore.exceptions import ClientError
 app = Flask(__name__)
 CORS(app)
 s3 = boto3.resource('s3')
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 table = dynamodb.Table('products')
-sage_client = boto3.client('sagemaker-runtime')
+sage_client = boto3.client('sagemaker-runtime', region_name='us-east-1')
+
 
 @app.route('/')
 def index():
-	return '''<form method=POST enctype=multipart/form-data action="upload">
+    return '''<form method=POST enctype=multipart/form-data action="upload">
 		<input type=file name=myfile>
 		<input type=submit>
 		</form>
 	'''
 
+
 @app.route('/create_new_product', methods=["POST"])
 def create_new_product():
     new_uuid = str(uuid4())
-    #s3.Bucket('thirdparty-image-bucket').put_object(new_uuid+"/")
-    table.put_item (Item={
+    # s3.Bucket('thirdparty-image-bucket').put_object(new_uuid+"/")
+    table.put_item(Item={
         'product_description': "Add Product Description",
         'username': 'admin',
         'product_id': new_uuid,
@@ -44,13 +46,15 @@ def create_new_product():
 
     return jsonify({"product_id": new_uuid}), new_uuid
 
+
 @app.route('/update/<id_>', methods=['POST'])
 def update_product(id_):
     product_id = id_
     val = request.get_data()
     dict_str = val.decode("UTF-8")
     values = ast.literal_eval(dict_str)
-    required = ['product_name', 'product_price', 'is_used_product', 'barcode', 'product_description', 'stat']
+    required = ['product_name', 'product_price', 'is_used_product',
+                'barcode', 'product_description', 'stat']
     if not all(k in values for k in required):
         return 'Missing values', 400
 
@@ -74,27 +78,28 @@ def update_product(id_):
 
 
 def removeEmptyString(dic):
-  if isinstance(dic, str):
-    if dic == "":
-      return None
-    else:
-      return dic
+    if isinstance(dic, str):
+        if dic == "":
+            return None
+        else:
+            return dic
 
-  for e in dic:
-    if isinstance(dic[e], dict):
-      dic[e] = removeEmptyString(dic[e])
-    if (isinstance(dic[e], str) and dic[e] == ""):
-      dic[e] = None
-    if isinstance(dic[e], list):
-      for entry in dic[e]:
-        removeEmptyString(entry)
-  return dic
+    for e in dic:
+        if isinstance(dic[e], dict):
+            dic[e] = removeEmptyString(dic[e])
+        if (isinstance(dic[e], str) and dic[e] == ""):
+            dic[e] = None
+        if isinstance(dic[e], list):
+            for entry in dic[e]:
+                removeEmptyString(entry)
+    return dic
 
 
 def update_from_barcode(dict_values, id_):
     dict_values = removeEmptyString(dict_values)
     product_id = id_
-    update_expression = 'SET {}'.format(','.join(f'#{k}=:{k}' for k in dict_values))
+    update_expression = 'SET {}'.format(
+        ','.join(f'#{k}=:{k}' for k in dict_values))
     expression_attribute_values = {f':{k}': v for k, v in dict_values.items()}
     expression_attribute_names = {f'#{k}': k for k in dict_values}
 
@@ -106,7 +111,7 @@ def update_from_barcode(dict_values, id_):
         ReturnValues='UPDATED_NEW',
     )
 
-#todo
+# todo
 @app.route('/delete/<id_>', methods=["POST"])
 def delete_item(id_):
     image_list = request.get_data()
@@ -118,29 +123,36 @@ def delete_item(id_):
 
     for url in values["image_list"]:
         key = url.split("https://thirdparty-image-bucket.s3.amazonaws.com/")[1]
-        #s3.Bucket('thirdparty-image-bucket').delete_key(key)
+        # s3.Bucket('thirdparty-image-bucket').delete_key(key)
         s3.Object('thirdparty-image-bucket', key).delete()
 
     return "Done", 200
 
 
-
-@app.route("/scan_barcode/", methods=["POST"])
+@app.route("/scan_barcode", methods=["POST"])
 def scan_barcode():
     val = []
-    send_, id_ = create_new_product()
-    for filename, file in request.files.items():
-        #print(file.filename)
-        response = sage_client.invoke_endpoint(
-            EndpointName='barcode-reader-rat',
-            Body=file,
-            ContentType='image/jpeg',
-            Accept='application/json'
-        )
 
-        #print(response["Body"].read().decode("utf-8"))
-        val = response["Body"].read().decode("utf-8")
-        val = ast.literal_eval(val)
+    if (not request.files["file"]):
+        return "Unacceptable Input", 400
+
+    send_, id_ = create_new_product()
+    # for filename, file in request.files.items():
+    file = request.files["file"]
+    # print(file.filename)
+    response = sage_client.invoke_endpoint(
+        EndpointName='barcode-reader-rat',
+        Body=file,
+        ContentType='image/jpeg',
+        Accept='application/json'
+    )
+
+    # print(response["Body"].read().decode("utf-8"))
+    val = response["Body"].read().decode("utf-8")
+
+    print(val)
+
+    val = ast.literal_eval(val)
 
     if len(list(val.keys())) == 1:
         barcode = list(val.keys())[0]
@@ -173,7 +185,7 @@ def scan_barcode():
 
             value["parse_product"] = json_body
 
-            #print(value)
+            # print(value)
             update_from_barcode(value, id_)
             return send_, 200
 
@@ -192,7 +204,7 @@ def retrieve(id_):
     dynamodb_items = []
     for object_summary in my_bucket.objects.filter(
             Prefix="52ce57a6-6272-4e4e-91e5-d4bc0640a8bd/"):
-        val = "https://thirdparty-image-bucket.s3.amazonaws.com/"+ object_summary.key
+        val = "https://thirdparty-image-bucket.s3.amazonaws.com/" + object_summary.key
         image_list.append(val)
 
     try:
@@ -200,18 +212,21 @@ def retrieve(id_):
             Key={'username': 'admin', 'product_id': folder_id},
         )
         dynamodb_items = response
-        #print(dynamodb_items)
+        # print(dynamodb_items)
     except ClientError as e:
         print(e.response['Error']['Message'])
         return "Error Occured", 400
     return jsonify({'image_list': image_list, "item_info": dynamodb_items}), 200
 
+
 @app.route('/upload/<id_>', methods=['POST'])
 def upload(id_):
     for filename, file in request.files.items():
-        #print(file.filename)
-        s3.Bucket('thirdparty-image-bucket').put_object(Key=id_+"/"+file.filename, Body=file)
+        # print(file.filename)
+        s3.Bucket('thirdparty-image-bucket').put_object(Key=id_ +
+                                                        "/"+file.filename, Body=file)
     return '<h1>File saved to S3 </h1>'
+
 
 @app.route('/get_item_list', methods=['POST'])
 def return_index():
@@ -219,23 +234,24 @@ def return_index():
         response = table.query(
             KeyConditionExpression=Key('username').eq('admin')
         )
-        #print(response)
+        # print(response)
         response = response["Items"]
         array = []
         for i in response:
             print(i)
-            #print(response)
+            # print(response)
             val = {}
             val["product_id"] = i["product_id"]
             val["status"] = i["stat"]
             val["product_name"] = i['product_name']
             array.append(val)
-        #print(array)
+        # print(array)
         print(response)
         return jsonify({"list_items": array}), 200
     except ClientError as e:
         print(e.response['Error']['Message'])
         return "Error Occured", 400
+
 
 if __name__ == '__main__':
 
@@ -247,10 +263,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
     port = args.port
     app.run(host='0.0.0.0', port=port)
-
-
-
-
-
-
-
