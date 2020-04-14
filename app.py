@@ -211,7 +211,10 @@ def upload(id_):
     for filename, file in request.files.items():
         #print(file.filename)
         s3.Bucket('thirdparty-image-bucket').put_object(Key=id_+"/"+file.filename, Body=file)
-    return '<h1>File saved to S3 </h1>'
+        s3Client = boto3.client("s3", region_name="us-east-1")
+        object_acl = s3.ObjectAcl("thirdparty-image-bucket", id_+"/"+file.filename)
+        response = object_acl.put(ACL='public-read')
+    return 'Done', 200
 
 @app.route('/get_item_list', methods=['POST'])
 def return_index():
