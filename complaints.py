@@ -11,33 +11,35 @@ import ast
 import decimal
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
-from AWSHackathon.sentiment_analyzer import truth_detector
+from sentiment_analyzer import truth_detector
 
 app = Flask(__name__)
 CORS(app)
 s3 = boto3.resource('s3')
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 complaints = dynamodb.Table('complaints')
 sage_client = boto3.client('sagemaker-runtime')
 shipped = dynamodb.Table("shipped")
 purchased = dynamodb.Table("purchased")
 
+
 @app.route("/send_complaint/<id_>", methods=["POST"])
 def send_complaint(id_):
     val = request.get_data()
     dict_str = val.decode("UTF-8")
-    values = ast.literal_eval(dict_str)
-    complaints.put_item (Item={
+    values = json.loads(dict_str)
+    complaints.put_item(Item={
         'complaint_description': values["description"],
         'username': 'customer',
         'product_id': id_,
-        'was_box_damaged': values["box_damage"],
+        'was_box_damaged': values["box_damaged"],
         'was_product_fake': values["product_fake"],
         'was_product_damaged': values["product_damaged"],
         'stat': "Complaint Sent"
     })
 
     return jsonify({"message": "If you are satisfied with your complaint please press the 'Review' Button"}), 200
+
 
 def retrieve_regular(id_):
     folder_id = id_
@@ -50,7 +52,7 @@ def retrieve_regular(id_):
             Key={'username': 'delivery_representative', 'product_id': folder_id},
         )
         delivery_items = response
-        #print(dynamodb_items)
+        # print(dynamodb_items)
     except ClientError as e:
         print(e.response['Error']['Message'])
         return "Error Occured", 400
@@ -60,7 +62,7 @@ def retrieve_regular(id_):
             Key={'username': 'admin', 'product_id': folder_id},
         )
         vendor_items = response
-        #print(dynamodb_items)
+        # print(dynamodb_items)
     except ClientError as e:
         print(e.response['Error']['Message'])
         return "Error Occured", 400
@@ -70,7 +72,7 @@ def retrieve_regular(id_):
             Key={'username': 'customer', 'product_id': folder_id},
         )
         complaint_items = response
-        #print(dynamodb_items)
+        # print(dynamodb_items)
     except ClientError as e:
         print(e.response['Error']['Message'])
         return "Error Occured", 400
@@ -89,7 +91,8 @@ def complaint_review(id_):
         return jsonify({"message": "The box was not damaged upon delivery. If you believe the box was damaged, a customer service representative will contact you."}), 200
     elif complaint["was_box_damaged"] == "false":
         if complaint['was_product_damaged'] == "true":
-            val = truth_detector(vendor["product_description"], complaint["complaint_description"])
+            val = truth_detector(
+                vendor["product_description"], complaint["complaint_description"])
             if val == 0:
                 return jsonify({"message": "In the product description the vendor listed similar defects as you mentioned. If you would still like a refund a customer service representative will contact you."}), 200
             else:

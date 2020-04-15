@@ -90,6 +90,7 @@ def ship_item(id_):
     values["stat"] = "Not Shipped"
     # print(values)
     purchased.put_item(Item=values)
+    send_to_shipment(product_id)
 
     return "Done", 200
 
@@ -186,11 +187,11 @@ def send_to_shipment(folder_id):
     values["username"] = "delivery_representative"
     values['product_id'] = folder_id
     values['shipment_id'] = ship_id
-    values['address'] = dynamodb_items["address"]
+    # values['address'] = dynamodb_items["address"]
     values['product_name'] = dynamodb_items["product_name"]
     values['product_price'] = dynamodb_items["product_price"]
     values['barcode'] = dynamodb_items["barcode"]
-    values["third_party_not_damaged"] = dynamodb_items["agree_not_damaged"]
+    # values["third_party_not_damaged"] = dynamodb_items["agree_not_damaged"]
     values["delivery_not_damaged"] = False
     values["stat"] = "Not Picked Up"
     # print(values)

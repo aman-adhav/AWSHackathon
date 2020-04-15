@@ -21,7 +21,7 @@ s3 = boto3.resource('s3')
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 sage_client = boto3.client('sagemaker-runtime', region_name='us-east-1')
 shipped = dynamodb.Table("shipped")
-table = dynamodb.Table('products')
+table = dynamodb.Table("products")
 
 
 @app.route("/arrival_inspection_check", methods=["POST"])
@@ -65,6 +65,7 @@ def check_for_damage():
 
 @app.route("/upload_to_check_damage/<id_>", methods=["POST"])
 def upload_to_check_damage(id_):
+
     try:
         table.update_item(
             Key={'username': 'admin', 'product_id': id_},
