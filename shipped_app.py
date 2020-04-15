@@ -13,14 +13,15 @@ from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 import qrcode
 import io
-from AWSHackathon.damage_detect import get_damage_prediction
+from damage_detect import get_damage_prediction
 from uuid import uuid4
 app = Flask(__name__)
 CORS(app)
 s3 = boto3.resource('s3')
-dynamodb = boto3.resource('dynamodb')
-sage_client = boto3.client('sagemaker-runtime')
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+sage_client = boto3.client('sagemaker-runtime', region_name='us-east-1')
 shipped = dynamodb.Table("shipped")
+table = dynamodb.Table('products')
 
 
 @app.route("/arrival_inspection_check", methods=["POST"])
@@ -28,7 +29,7 @@ def check_for_damage():
     val = ""
     dynamodb = []
     for filename, file in request.files.items():
-        #print(file.filename)
+        # print(file.filename)
         response = sage_client.invoke_endpoint(
             EndpointName='barcode-reader-rat',
             Body=file,
@@ -36,14 +37,15 @@ def check_for_damage():
             Accept='application/json'
         )
 
-        #print(response["Body"].read().decode("utf-8"))
+        # print(response["Body"].read().decode("utf-8"))
         val = response["Body"].read().decode("utf-8")
         val = ast.literal_eval(val)
 
     if len(list(val.keys())) == 1:
         try:
             response = shipped.get_item(
-                Key={'username': 'delivery_representative', 'product_id': list(val.keys())[0]},
+                Key={'username': 'delivery_representative',
+                     'product_id': list(val.keys())[0]},
             )
             dynamodb_items = response["Item"]
             print(dynamodb_items)
@@ -60,21 +62,39 @@ def check_for_damage():
 
     return "Something went wrong", 200
 
+
 @app.route("/upload_to_check_damage/<id_>", methods=["POST"])
 def upload_to_check_damage(id_):
+    try:
+        table.update_item(
+            Key={'username': 'admin', 'product_id': id_},
+            UpdateExpression="set stat=:stat",
+            ExpressionAttributeValues={
+                ":stat": "completed",
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+
+    except ClientError as e:
+        print(e.response['Error']['Message'])
+
     for filename, file in request.files.items():
-        #print(file.filename)
-        s3.Bucket('thirdparty-image-bucket').put_object(Key=id_+"-delivery/"+file.filename, Body=file)
+        # print(file.filename)
+        s3.Bucket('thirdparty-image-bucket').put_object(Key=id_ +
+                                                        "-delivery/"+file.filename, Body=file)
         s3Client = boto3.client("s3", region_name="us-east-1")
-        object_acl = s3.ObjectAcl("thirdparty-image-bucket", id_+"-delivery/"+file.filename)
+        object_acl = s3.ObjectAcl(
+            "thirdparty-image-bucket", id_+"-delivery/"+file.filename)
         response = object_acl.put(ACL='public-read')
-        val = get_damage_prediction("https://thirdparty-image-bucket.s3.amazonaws.com/" + id_+"-delivery/"+file.filename)
+        val = get_damage_prediction(
+            "https://thirdparty-image-bucket.s3.amazonaws.com/" + id_+"-delivery/"+file.filename)
         dict_str = val.decode("UTF-8")
         values = ast.literal_eval(dict_str)
         if values["prediction"] == "damaged":
-            return jsonify({"state": 'There seems to be damage. Check for error to overide claim.'}), 200
+            return jsonify({"damaged": True, "state": 'There seems to be damage. Check for error to overide claim.'}), 200
 
-    return jsonify({"state": 'No Damage Detected'}), 200
+    return jsonify({"damaged": False, "state": 'No Damage Detected'}), 200
+
 
 @app.route('/update/<id_>', methods=['POST'])
 def update_product(id_):

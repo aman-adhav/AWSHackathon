@@ -13,15 +13,15 @@ from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 import qrcode
 import io
-from AWSHackathon.damage_detect import get_damage_prediction
+from damage_detect import get_damage_prediction
 from uuid import uuid4
 app = Flask(__name__)
 CORS(app)
 s3 = boto3.resource('s3')
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 table = dynamodb.Table('products')
 purchased = dynamodb.Table("purchased")
-sage_client = boto3.client('sagemaker-runtime')
+sage_client = boto3.client('sagemaker-runtime', region_name='us-east-1')
 shipped = dynamodb.Table("shipped")
 
 
@@ -43,20 +43,22 @@ def qr_code_generator(product_id):
         Key=product_id + "-shipment/qr_code_tags.jpg", Body=byteIO.getvalue())
     return product_id + "-shipment/qr_code_tags.jpg"
 
+
 @app.route("/ship_item/<id_>", methods=["GET"])
 def ship_item(id_):
     product_id = id_
     shipment_qr = qr_code_generator(product_id)
     val = request.get_data()
     dict_str = val.decode("UTF-8")
-    values = ast.literal_eval(dict_str)
+    # values = ast.literal_eval(dict_str)
+    values = {}
     dynamodb_items = None
     try:
         retrieve = table.update_item(
             Key={'username': 'admin', 'product_id': product_id},
             UpdateExpression="set stat=:stat",
             ExpressionAttributeValues={
-                ":stat": "Purchased",
+                ":stat": "shipped",
             },
             ReturnValues="UPDATED_NEW"
         )
@@ -83,12 +85,14 @@ def ship_item(id_):
     values['barcode'] = dynamodb_items["barcode"]
     values["agree_not_fake"] = False
     values["agree_not_damaged"] = False
-    values["qr_code"] = "https://thirdparty-image-bucket.s3.amazonaws.com/"+ product_id + "-shipment/qr_code_tags.jpg"
+    values["qr_code"] = "https://thirdparty-image-bucket.s3.amazonaws.com/" + \
+        product_id + "-shipment/qr_code_tags.jpg"
     values["stat"] = "Not Shipped"
-    #print(values)
+    # print(values)
     purchased.put_item(Item=values)
 
     return "Done", 200
+
 
 @app.route('/retrieve_for_shipment/<id_>', methods=["POST"])
 def retrieve(id_):
@@ -96,15 +100,15 @@ def retrieve(id_):
     my_bucket = s3.Bucket('thirdparty-image-bucket')
     image_list = []
     dynamodb_items = []
-    for object_summary in my_bucket.objects.filter(Prefix= id_+"-shipment/"):
-        val = "https://thirdparty-image-bucket.s3.amazonaws.com/"+ object_summary.key
+    for object_summary in my_bucket.objects.filter(Prefix=id_+"-shipment/"):
+        val = "https://thirdparty-image-bucket.s3.amazonaws.com/" + object_summary.key
         image_list.append(val)
     try:
         response = purchased.get_item(
             Key={'username': 'admin', 'product_id': folder_id},
         )
         dynamodb_items = response
-        #print(dynamodb_items)
+        # print(dynamodb_items)
     except ClientError as e:
         print(e.response['Error']['Message'])
         return "Error Occured", 400
@@ -114,12 +118,20 @@ def retrieve(id_):
 @app.route('/upload_for_shipment/<id_>', methods=['POST'])
 def upload(id_):
     for filename, file in request.files.items():
-        #print(file.filename)
-        s3.Bucket('thirdparty-image-bucket').put_object(Key=id_+"-shipment/"+file.filename, Body=file)
+        # print(file.filename)
+        contentType = file.content_type
+        filePath = id_ + "-shipment/" + file.filename
+        fileURL = 'https://thirdparty-image-bucket.s3.amazonaws.com/' + filePath
+
+        s3.Bucket('thirdparty-image-bucket').put_object(Key=filePath,
+                                                        Body=file, ContentType=contentType)
         s3Client = boto3.client("s3", region_name="us-east-1")
-        object_acl = s3.ObjectAcl("thirdparty-image-bucket", id_+"-shipment/"+file.filename)
+        object_acl = s3.ObjectAcl(
+            "thirdparty-image-bucket", id_+"-shipment/"+file.filename)
         response = object_acl.put(ACL='public-read')
-    return 'Done', 200
+
+    return jsonify({"url": fileURL}), 200
+
 
 @app.route('/check_for_damage/<id_>', methods=['POST'])
 def check_damage(id_):
@@ -128,8 +140,8 @@ def check_damage(id_):
     image_list = []
     dynamodb_items = []
     for object_summary in my_bucket.objects.filter(
-            Prefix= folder_id + "-shipment/"):
-        val = "https://thirdparty-image-bucket.s3.amazonaws.com/"+ object_summary.key
+            Prefix=folder_id + "-shipment/"):
+        val = "https://thirdparty-image-bucket.s3.amazonaws.com/" + object_summary.key
         if "qr_code_tags.jpg" not in val:
             image_list.append(val)
 
@@ -138,10 +150,10 @@ def check_damage(id_):
         dict_str = val.decode("UTF-8")
         values = ast.literal_eval(dict_str)
         if values["prediction"] == "damaged":
-            return jsonify({"Damaged": image}), 400
+            return jsonify({"damaged": image}), 200
 
-    send_to_shipment(folder_id)
-    return "Clear",200
+    # send_to_shipment(folder_id)
+    return jsonify({"damaged": False}), 200
 
 
 def send_to_shipment(folder_id):
@@ -163,7 +175,7 @@ def send_to_shipment(folder_id):
             Key={'username': 'admin', 'product_id': folder_id},
         )
         dynamodb_items = response
-        #print(dynamodb_items)
+        # print(dynamodb_items)
     except ClientError as e:
         print(e.response['Error']['Message'])
         return "Error Occured", 400
@@ -181,7 +193,7 @@ def send_to_shipment(folder_id):
     values["third_party_not_damaged"] = dynamodb_items["agree_not_damaged"]
     values["delivery_not_damaged"] = False
     values["stat"] = "Not Picked Up"
-    #print(values)
+    # print(values)
     shipped.put_item(Item=values)
 
 
@@ -209,6 +221,7 @@ def update_product(id_):
         return "Done", 200
     except ClientError as e:
         print(e.response['Error']['Message'])
+
 
 if __name__ == '__main__':
 
