@@ -1,5 +1,14 @@
 # AWSHackathon
 
+## Prerequisites
+
+You'll need the following:
+
+- [Node.js and npm](https://nodejs.org/en/), for the frontend
+- [Python 3.5.0+](https://www.python.org/downloads/), for the backend
+- [Git](https://git-scm.com/), to clone this repository
+- A Browser, to view the website
+
 ## Usage
 
 First, clone the git repository:
