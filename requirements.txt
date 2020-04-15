@@ -1,0 +1,12 @@
+urllib3==1.25.8
+Flask-Cors==3.0.8
+requests==2.23.0
+Flask==1.1.2
+Flask-Cors==3.0.8
+boto3==1.12.39
+boto3==1.12.39
+botocore==1.15.39
+sagemaker==1.55.3
+qrcode==6.1
+Pillow==7.1.1
+numpy==1.18.2
