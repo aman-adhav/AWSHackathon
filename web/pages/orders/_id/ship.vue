@@ -1,7 +1,7 @@
 <template>
   <app-layout title="Ship order">
     <v-container class="pa-4">
-      <v-card>
+      <v-card :loading="loading">
         <v-window touchless v-model="window">
           <v-window-item :value="1">
             <v-card-title>Review information</v-card-title>
@@ -90,7 +90,7 @@
             <v-divider></v-divider>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="primary" depressed @click="window = 2">
+              <v-btn color="primary" depressed @click="nextStep">
                 Next
               </v-btn>
             </v-card-actions>
@@ -98,15 +98,7 @@
           <v-window-item :value="2">
             <v-card-title>Upload box</v-card-title>
             <v-card-text>
-              <app-uppy
-                ref="uppy"
-                :config="{
-                  restrictions: {
-                    maxNumberOfFiles: 1,
-                    allowedFileTypes: ['image/jpeg', 'image/png']
-                  }
-                }"
-              ></app-uppy>
+              <app-uppy ref="uppy"></app-uppy>
             </v-card-text>
             <v-divider></v-divider>
             <v-card-actions>
@@ -132,12 +124,22 @@
           <v-window-item :value="3">
             <v-card>
               <v-flex grow class="pa-4 text-center">
-                <v-icon color="success" size="100" v-text="mdiCheckCircle">
+                <v-icon
+                  v-if="!damaged"
+                  color="success"
+                  size="100"
+                  v-text="mdiCheckCircle"
+                >
+                </v-icon>
+                <v-icon v-else color="error" size="100" v-text="mdiClose">
                 </v-icon>
               </v-flex>
               <v-card-title class="justify-center">
-                <span class="text-break text-center">
+                <span v-if="!damaged" class="text-break text-center">
                   Product marked as shipped
+                </span>
+                <span v-else class="text-break text-center">
+                  We believe this product has been damaged. Try again.
                 </span>
               </v-card-title>
               <v-card-actions class="justify-center">
@@ -154,7 +156,7 @@
 </template>
 
 <script>
-import { mdiCheckCircle } from "@mdi/js";
+import { mdiCheckCircle, mdiClose } from "@mdi/js";
 
 import AppLayout from "~/components/Layout/app.vue";
 import AppUppy from "~/components/uppy";
@@ -182,31 +184,73 @@ export default {
       email: "NancyDWilliams@hotmail.com",
       window: 1,
       loading: false,
-      mdiCheckCircle
+      uploaded: false,
+      damaged: false,
+      mdiCheckCircle,
+      mdiClose
     };
   },
   methods: {
+    nextStep() {
+      this.window = 2;
+    },
     goHome() {
       window.history.length > 1 ? this.$router.go(-1) : this.$router.push("/");
     },
     initShip() {
       this.loading = true;
 
+      const { id } = this.$route.params;
+
+      if (this.uploaded) {
+        this.checkForDamage(id);
+        return;
+      }
+
+      this.$refs.uppy.uppy.getPlugin(
+        "XHRUpload"
+      ).opts.endpoint = `http://localhost:5001/upload_for_shipment/${id}`;
+
       this.$refs.uppy
         .upload()
-        .then(({ successful }) => {
-          if (successful.length) return Promise.resolve(true);
+        .then(({ successful, failed }) => {
+          if (!successful.length || failed.length)
+            return Promise.resolve(false);
 
-          return Promise.resolve(false);
+          return Promise.resolve(true);
         })
         .then(uploaded => {
-          if (uploaded) this.window = 3;
+          this.uploaded = uploaded;
 
-          this.loading = false;
+          if (uploaded) return this.checkForDamage(id);
         })
         .catch(error => {
-          console.log(error);
+          console.error(error);
         });
+    },
+    checkForDamage(id) {
+      return this.$axios({
+        method: "POST",
+        url: `http://localhost:5001/check_for_damage/${id}`
+      })
+        .then(({ data }) => {
+          if (data.damaged === false) this.damaged = false;
+          else this.damaged = true;
+
+          if (!this.damaged) return this.shipItem(id);
+          return Promise.resolve();
+        })
+        .then(() => {
+          this.loading = false;
+
+          this.window = 3;
+        });
+    },
+    shipItem(id) {
+      return this.$axios({
+        method: "GET",
+        url: `http://localhost:5001/ship_item/${id}`
+      });
     }
   },
   components: { AppLayout, AppUppy }

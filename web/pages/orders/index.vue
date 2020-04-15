@@ -1,6 +1,5 @@
 <template>
-  <app-layout title="Orders">
-    <!-- <v-btn @click="test">test</v-btn> -->
+  <app-layout title="Orders" :loading="loading">
     <v-container grid-list-md>
       <v-layout wrap>
         <template v-for="(stat, i) in stats">
@@ -35,7 +34,21 @@
       <v-layout>
         <v-flex>
           <v-card>
-            <v-data-table :headers="headers" :items="orders" item-key="id">
+            <v-data-table
+              :headers="headers"
+              :items="orders"
+              item-key="product_id"
+            >
+              <template v-slot:item.image="{ item }">
+                <template v-if="item.images.length">
+                  <div class="order-image-container py-2">
+                    <img height="64" width="auto" :src="item.images[0]" />
+                  </div>
+                </template>
+                <template v-else>
+                  <v-icon x-large v-text="mdiPackageVariantClosed"></v-icon>
+                </template>
+              </template>
               <template v-slot:item.date="{ item }">
                 {{ item.date.toLocaleString() }}
               </template>
@@ -67,15 +80,12 @@
                     </v-btn>
                   </template>
                   <v-list>
-                    <v-list-item
-                      :disabled="item.payment !== 'paid'"
-                      :to="`/orders/${item.id}/ship`"
-                    >
+                    <v-list-item :to="`/orders/${item.product_id}/ship`">
                       <v-list-item-title>Ship</v-list-item-title>
                     </v-list-item>
-                    <v-list-item @click="() => true">
+                    <!-- <v-list-item @click="() => true">
                       <v-list-item-title>Delete</v-list-item-title>
-                    </v-list-item>
+                    </v-list-item> -->
                   </v-list>
                 </v-menu>
               </template>
@@ -132,6 +142,7 @@ export default {
     });
 
     return {
+      loading: true,
       mdiDotsVertical,
       stats: [
         {
@@ -157,112 +168,44 @@ export default {
       ],
       headers: [
         {
-          text: "Product",
-          value: "product.name"
+          text: "Image",
+          value: "image",
+          sortable: false,
+          align: "center"
         },
-        { text: "Date", value: "date" },
-        { text: "Quantity", value: "quantity", align: "center" },
-        { text: "Payment", value: "payment", align: "center" },
+        {
+          text: "Product",
+          value: "product_name"
+        },
         { text: "Status", value: "status", align: "center" },
-        { text: "Total", value: "total" },
         { text: "Actions", value: "actions", align: "center", sortable: false }
       ],
-      orders: [
-        {
-          id: "5e87975045682e9ceff61ac4",
-          quantity: 7,
-          date: new Date("Tue Mar 10 2020 06:29:13 GMT+0000 (UTC)"),
-          payment: "pending",
-          total: 94.21,
-          status: "unfulfilled",
-          product: {
-            id: "5e87975078b04f2289ba25f7",
-            name: "Leggings",
-            image: "/sample_leggings_product.jpeg"
-          }
-        },
-        {
-          id: "5e879750970028a18cc3045d",
-          quantity: 9,
-          date: new Date("Fri Feb 14 2020 16:53:00 GMT+0000 (UTC)"),
-          payment: "paid",
-          total: 196.48,
-          status: "unfulfilled",
-          product: {
-            id: "5e879750f345db849675ece6",
-            name: "Leggings",
-            image: "/sample_leggings_product.jpeg"
-          }
-        },
-        {
-          id: "5e87975056262ec1bf954779",
-          quantity: 5,
-          date: new Date("Fri Feb 14 2020 06:20:13 GMT+0000 (UTC)"),
-          payment: "pending",
-          total: 67.15,
-          status: "unfulfilled",
-          product: {
-            id: "5e879750a60436750b87c50a",
-            name: "Leggings",
-            image: "/sample_leggings_product.jpeg"
-          }
-        },
-        {
-          id: "5e8797506fcd0113861c13f7",
-          quantity: 5,
-          date: new Date("Mon Feb 03 2020 07:25:53 GMT+0000 (UTC)"),
-          payment: "paid",
-          total: 26.4,
-          status: "unfulfilled",
-          product: {
-            id: "5e879750d6c3655037256d73",
-            name: "Leggings",
-            image: "/sample_leggings_product.jpeg"
-          }
-        },
-        {
-          id: "5e8797501e694815e51b77b5",
-          quantity: 1,
-          date: new Date("Fri Feb 28 2020 10:09:38 GMT+0000 (UTC)"),
-          payment: "paid",
-          total: 155.47,
-          status: "unfulfilled",
-          product: {
-            id: "5e8797503bedf858a90bb018",
-            name: "Leggings",
-            image: "/sample_leggings_product.jpeg"
-          }
-        },
-        {
-          id: "5e8797505f477087e79f0483",
-          quantity: 3,
-          date: new Date("Sun Jan 26 2020 11:09:55 GMT+0000 (UTC)"),
-          payment: "paid",
-          total: 99.53,
-          status: "unfulfilled",
-          product: {
-            id: "5e8797501e9f15d7dc7a8e74",
-            name: "Leggings",
-            image: "/sample_leggings_product.jpeg"
-          }
-        }
-      ]
+      orders: [],
+      mdiPackageVariantClosed
     };
+  },
+  mounted() {
+    this.fetchItems();
   },
   methods: {
     formatCurrency(number) {
       return this.formatter.format(number);
     },
-    test() {
+    fetchItems() {
       this.$axios({
-        method: "GET",
-        url: "http://localhost:5000/api/private",
-        headers: { Authorization: `Bearer ${this.$auth.accessToken}` }
+        method: "POST",
+        url: "http://localhost:5000/get_item_list"
       })
         .then(({ data }) => {
-          console.log(data);
+          if (data.list_items) this.orders = data.list_items;
+          else this.orders = [];
         })
-        .catch(error => console.error(error));
+        .catch(error => {
+          console.error(error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     }
   },
   components: { AppLayout }
