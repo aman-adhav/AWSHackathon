@@ -11,7 +11,7 @@ import ast
 import decimal
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
-
+from AWSHackathon.sentiment_analyzer import compare_price
 app = Flask(__name__)
 CORS(app)
 s3 = boto3.resource('s3')
@@ -227,6 +227,21 @@ def retrieve(id_):
     return jsonify({'image_list': image_list, "item_info": dynamodb_items}), 200
 
 
+@app.route('/send_for_review/<id_>', methods=['POST'])
+def send_for_review(id_):
+    json_format = retrieve_regular(id_)["item_info"]["Item"]
+    val = ""
+    if "version_in_market" in json_format:
+        actual_price = json_format["version_in_market"]
+        third_party_price = json_format["product_price"]
+        val = compare_price(actual_price, third_party_price, json_format)
+    elif "expensive_version" in json_format:
+        actual_price = json_format["expensive_version"]
+        third_party_price = json_format["product_price"]
+        val = compare_price(actual_price, third_party_price, json_format)
+
+    return jsonify(val), 200
+
 @app.route('/upload/<id_>', methods=['POST'])
 def upload(id_):
     for filename, file in request.files.items():
@@ -258,7 +273,7 @@ def upload(id_):
             print(e.response['Error']['Message'])
             return "Server error", 500
 
-    return jsonify({'url': fileURL}), 200
+        return jsonify({'url': fileURL}), 200
 
 
 @app.route('/get_item_list', methods=['POST'])
