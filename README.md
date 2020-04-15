@@ -25,7 +25,13 @@ $ cd AWSHackathon
 
 ### To setup the backend:
 
-Launch the three different apps:
+Install all dependencies inside requirements.txt file for python:
+
+```bash
+$ pip install -r requirements.txt
+```
+
+Launch the four different apps:
 
 ```bash
 $ python app.py
