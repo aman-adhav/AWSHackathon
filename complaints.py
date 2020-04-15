@@ -79,18 +79,17 @@ def retrieve_regular(id_):
 
     return delivery_items, vendor_items, complaint_items
 
-
 @app.route('/review_complaint/<id_>', methods=["POST"])
 def complaint_review(id_):
     delivery, vendor, complaint = retrieve_regular(id_)
     delivery = delivery["Item"]
     vendor = vendor["Item"]
     complaint = complaint["Item"]
-
-    if complaint["was_box_damaged"] == "true" and delivery["delivery_not_damaged"] == "true":
+    print(type(complaint["was_box_damaged"]),complaint["was_box_damaged"], type(delivery["delivery_not_damaged"]), delivery["delivery_not_damaged"])
+    if complaint["was_box_damaged"] is True and delivery["delivery_not_damaged"] is True:
         return jsonify({"message": "The box was not damaged upon delivery. If you believe the box was damaged, a customer service representative will contact you."}), 200
-    elif complaint["was_box_damaged"] == "false":
-        if complaint['was_product_damaged'] == "true":
+    elif complaint["was_box_damaged"] == False:
+        if complaint['was_product_damaged'] == True:
             val = truth_detector(
                 vendor["product_description"], complaint["complaint_description"])
             if val == 0:
