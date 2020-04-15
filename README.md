@@ -31,6 +31,7 @@ Launch the three different apps:
 $ python app.py
 $ python shipment_app.py
 $ python shipped_app.py
+$ python complaints.py
 ```
 
 ### To setup the frontend:
