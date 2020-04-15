@@ -136,13 +136,18 @@
           <v-window-item :value="3">
             <v-card>
               <v-flex grow class="pa-4 text-center">
-                <v-icon color="success" size="100" v-text="mdiCheckCircle">
+                <v-icon
+                  v-if="!fake"
+                  color="success"
+                  size="100"
+                  v-text="mdiCheckCircle"
+                >
+                </v-icon>
+                <v-icon v-else color="error" size="100" v-text="mdiClose">
                 </v-icon>
               </v-flex>
               <v-card-title class="justify-center">
-                <span class="text-break text-center">
-                  Created new product
-                </span>
+                <span class="text-break text-center" v-text="message"></span>
               </v-card-title>
               <v-card-actions class="justify-center">
                 <v-btn color="primary" text @click="goHome">
@@ -158,7 +163,7 @@
 </template>
 
 <script>
-import { mdiCurrencyUsd, mdiCheckCircle } from "@mdi/js";
+import { mdiCurrencyUsd, mdiCheckCircle, mdiClose } from "@mdi/js";
 
 import AppLayout from "~/components/Layout/app.vue";
 import AppUppy from "~/components/uppy";
@@ -178,6 +183,7 @@ export default {
       createdProduct: false,
       mdiCurrencyUsd,
       mdiCheckCircle,
+      mdiClose,
       window: 1,
       title: null,
       price: null,
@@ -188,6 +194,9 @@ export default {
       packaging: false,
       warranty: false,
       id: null,
+      uploadedMedia: false,
+      message: "",
+      fake: false,
       snackbar: {
         on: false,
         text: "",
@@ -218,6 +227,8 @@ export default {
     },
     upload() {
       this.uploading = true;
+
+      if (this.uploadedMedia) return this.sendForReview();
 
       // title: null,
       // price: null,
@@ -271,7 +282,9 @@ export default {
         .then(({ failed }) => {
           if (failed.length) return;
 
-          this.window = 3;
+          this.uploadedMedia = true;
+
+          return this.sendForReview();
         })
         .catch(error => {
           this.snackbar.text = error.message || "Couldn't add product";
@@ -280,6 +293,24 @@ export default {
         .finally(() => {
           this.uploading = false;
         });
+    },
+    sendForReview() {
+      return this.$axios({
+        method: "POST",
+        url: `http://localhost:5000/send_for_review/${this.id}`
+      }).then(({ data }) => {
+        console.log(data);
+
+        if (data.fake_product_message === "All Clear") {
+          this.message = "Created new product";
+          this.fake = false;
+        } else {
+          this.message = data.fake_product_message;
+          this.fake = true;
+        }
+
+        this.window = 3;
+      });
     }
   },
   components: { AppLayout, AppUppy }
