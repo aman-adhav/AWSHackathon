@@ -80,7 +80,7 @@
                     </v-btn>
                   </template>
                   <v-list>
-                    <v-list-item :to="`/orders/${item.product_id}/ship`">
+                    <v-list-item :disabled="item.status !== 'unfulfilled'" :to="`/orders/${item.product_id}/ship`">
                       <v-list-item-title>Ship</v-list-item-title>
                     </v-list-item>
                     <!-- <v-list-item @click="() => true">

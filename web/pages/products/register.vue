@@ -133,6 +133,24 @@
               </v-btn>
             </v-card-actions>
           </v-window-item>
+          <v-window-item :value="3">
+            <v-card>
+              <v-flex grow class="pa-4 text-center">
+                <v-icon color="success" size="100" v-text="mdiCheckCircle">
+                </v-icon>
+              </v-flex>
+              <v-card-title class="justify-center">
+                <span class="text-break text-center">
+                  Created new product
+                </span>
+              </v-card-title>
+              <v-card-actions class="justify-center">
+                <v-btn color="primary" text @click="goHome">
+                  go home
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-window-item>
         </v-window>
       </v-card>
     </v-container>
@@ -140,7 +158,7 @@
 </template>
 
 <script>
-import { mdiCurrencyUsd } from "@mdi/js";
+import { mdiCurrencyUsd, mdiCheckCircle } from "@mdi/js";
 
 import AppLayout from "~/components/Layout/app.vue";
 import AppUppy from "~/components/uppy";
@@ -159,6 +177,7 @@ export default {
       uploading: false,
       createdProduct: false,
       mdiCurrencyUsd,
+      mdiCheckCircle,
       window: 1,
       title: null,
       price: null,
@@ -182,6 +201,9 @@ export default {
       "http://localhost:5000/scan_barcode";
   },
   methods: {
+    goHome() {
+      this.$router.push("/orders");
+    },
     barcodeUploaded({ successful }) {
       if (!successful.length) return;
 
@@ -249,7 +271,7 @@ export default {
         .then(({ failed }) => {
           if (failed.length) return;
 
-          console.log("Done");
+          this.window = 3;
         })
         .catch(error => {
           this.snackbar.text = error.message || "Couldn't add product";
