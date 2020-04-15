@@ -13,16 +13,21 @@ import boto3
 import json
 import ast
 
+
 def compare_price(actual_price, third_party_price, json_format):
     if actual_price > third_party_price:
-        percent_diff = 1 - third_party_price/actual_price
+        percent_diff = third_party_price/actual_price
+
         if percent_diff < 0.7:
             if json_format["is_used_product"] == "true":
-                json_body = {"fake_product_message": "We compared your selling price to other retailers in the market and it seems to be significantly lower. Please update the description and the title. In your description you must include the appropriate reason to sell at a lower price."
-                }
-                return json_body
+                json_body = {"fake_product_message": "We compared your selling price to other retailers in the market and it seems to be significantly lower. Please update the description and the title. In your description you must include the appropriate reason to sell at a lower price."}
             elif json_format["is_used_product"] == "false":
                 json_body = {"fake_product_message": "We compared your selling price to other retailers in the market and it seems to be significantly lower. Is this a used product? If so please mark this product as used/refurbished. Please update the description and the title. In your description you must include the appropriate reason to sell at a lower price."}
+            else:
+                json_body = {"fake_product_message": "We compared your selling price to other retailers in the market and it seems to be significantly lower. Please update the description and the title. In your description you must include the appropriate reason to sell at a lower price."}
+
+            return json_body
+
         else:
             return {"fake_product_message": "All Clear"}
     return {"fake_product_message": "All Clear"}

@@ -155,7 +155,7 @@ def scan_barcode():
         barcode = list(val.keys())[0]
         value = {}
         val = requests.get(
-            "https://api.barcodelookup.com/v2/products?barcode=" + barcode + "&formatted=y&key=0as2xduw3qreu9avhfv2pva2qz3rbm")
+            "https://api.barcodelookup.com/v2/products?barcode=" + barcode + "&formatted=y&key=cmsr5t3jnfq14ncd3ws4hcif6cbrwx")
         dict_str = val.content.decode("UTF-8")
         if dict_str != "\n":
             values = ast.literal_eval(dict_str)
@@ -174,7 +174,7 @@ def scan_barcode():
             if len(json_body["stores"]) > 1:
                 expensive = json_body["stores"][-1]["store_price"]
                 cheap = json_body["stores"][0]["store_price"]
-                value["cheap_version"] = expensive
+                value["expensive_version"] = expensive
                 value["cheap_version"] = cheap
             elif len(json_body["stores"]) == 1:
                 value["version_in_market"] = json_body["stores"][0][
@@ -188,11 +188,11 @@ def scan_barcode():
 
             price = 0
 
-            if value["cheap_version"]:
+            if "cheap_version" in value:
                 price = value["cheap_version"]
-            elif value["cheap_version"]:
-                price = value["cheap_version"]
-            elif value["version_in_market"]:
+            elif "expensive_version" in value:
+                price = value["expensive_version"]
+            elif "version_in_market" in value:
                 price = value["version_in_market"]
 
             return jsonify({"product_id": id_, "barcode": value["barcode"], "price": price, "product_name": value["parse_product"]["product_name"]}), 200
@@ -256,11 +256,13 @@ def send_for_review(id_):
     if "version_in_market" in json_format:
         actual_price = json_format["version_in_market"]
         third_party_price = json_format["product_price"]
-        val = compare_price(actual_price, third_party_price, json_format)
+        val = compare_price(decimal.Decimal(actual_price),
+                            third_party_price, json_format)
     elif "expensive_version" in json_format:
         actual_price = json_format["expensive_version"]
         third_party_price = json_format["product_price"]
-        val = compare_price(actual_price, third_party_price, json_format)
+        val = compare_price(decimal.Decimal(actual_price),
+                            decimal.Decimal(third_party_price), json_format)
 
     return jsonify(val), 200
 
