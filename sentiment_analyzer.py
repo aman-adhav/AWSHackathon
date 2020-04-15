@@ -5,7 +5,7 @@ import requests
 from sagemaker import get_execution_role
 from sagemaker import transformer
 from sagemaker import model
-from AWSHackathon.src.model_package_arns import ModelPackageArnProvider
+from src.model_package_arns import ModelPackageArnProvider
 from sagemaker import ModelPackage
 from io import BytesIO
 
