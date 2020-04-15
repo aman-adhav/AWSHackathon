@@ -226,14 +226,15 @@ def retrieve(id_):
         return "Error Occured", 400
     return jsonify({'image_list': image_list, "item_info": dynamodb_items}), 200
 
+
 def retrieve_regular(id_):
     folder_id = id_
     my_bucket = s3.Bucket('thirdparty-image-bucket')
     image_list = []
     dynamodb_items = []
     for object_summary in my_bucket.objects.filter(
-            Prefix= folder_id + "/"):
-        val = "https://thirdparty-image-bucket.s3.amazonaws.com/"+ object_summary.key
+            Prefix=folder_id + "/"):
+        val = "https://thirdparty-image-bucket.s3.amazonaws.com/" + object_summary.key
         image_list.append(val)
 
     try:
@@ -241,7 +242,7 @@ def retrieve_regular(id_):
             Key={'username': 'admin', 'product_id': folder_id},
         )
         dynamodb_items = response
-        #print(dynamodb_items)
+        # print(dynamodb_items)
     except ClientError as e:
         print(e.response['Error']['Message'])
         return "Error Occured", 400
@@ -262,6 +263,7 @@ def send_for_review(id_):
         val = compare_price(actual_price, third_party_price, json_format)
 
     return jsonify(val), 200
+
 
 @app.route('/upload/<id_>', methods=['POST'])
 def upload(id_):

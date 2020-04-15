@@ -18,7 +18,7 @@ CORS(app)
 s3 = boto3.resource('s3')
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 complaints = dynamodb.Table('complaints')
-sage_client = boto3.client('sagemaker-runtime')
+sage_client = boto3.client('sagemaker-runtime', region_name='us-east-1')
 shipped = dynamodb.Table("shipped")
 purchased = dynamodb.Table("purchased")
 
