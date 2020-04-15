@@ -17,11 +17,11 @@ def compare_price(actual_price, third_party_price, json_format):
     if actual_price > third_party_price:
         percent_diff = 1 - third_party_price/actual_price
         if percent_diff < 0.7:
-            if json_format["is_used_product"] == "true":
+            if json_format["is_used_product"] == True:
                 json_body = {"fake_product_message": "We compared your selling price to other retailers in the market and it seems to be significantly lower. Please update the description and the title. In your description you must include the appropriate reason to sell at a lower price."
                 }
                 return json_body
-            elif json_format["is_used_product"] == "false":
+            elif json_format["is_used_product"] == False:
                 json_body = {"fake_product_message": "We compared your selling price to other retailers in the market and it seems to be significantly lower. Is this a used product? If so please mark this product as used/refurbished. Please update the description and the title. In your description you must include the appropriate reason to sell at a lower price."}
         else:
             return {"fake_product_message": "All Clear"}
