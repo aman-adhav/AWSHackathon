@@ -279,7 +279,7 @@ def return_index():
             val["images"] = i["images"]
             array.append(val)
         # print(array)
-        print(response)
+        # print(response)
         return jsonify({"list_items": array}), 200
     except ClientError as e:
         print(e.response['Error']['Message'])
