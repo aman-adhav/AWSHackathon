@@ -11,7 +11,7 @@ import ast
 import decimal
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
-from AWSHackathon.sentiment_analyzer import compare_price
+from sentiment_analyzer import compare_price
 app = Flask(__name__)
 CORS(app)
 s3 = boto3.resource('s3')
