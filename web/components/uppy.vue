@@ -50,9 +50,10 @@ export default {
         plugins: ["Webcam"]
       })
       .use(XHRUpload, {
+        timeout: 0,
         formData: true,
         fieldName: "file",
-        endpoint: "http://dummy.restapiexample.com/api/v1/create"
+        endpoint: "https://dummy.restapiexample.com/api/v1/create"
       });
 
     this.uppy.on("file-added", file => this.$emit("file-added", file));
