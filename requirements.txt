@@ -1,4 +1,4 @@
-urllib3==1.25.8
+urllib3==1.26.5
 Flask-Cors==3.0.8
 requests==2.23.0
 Flask==1.1.2
